@@ -25,7 +25,6 @@
 #define SENSITIVITY 100
 
 #define GPS_DATA_FILENAME "gps-data.txt"
-#define CONTACTS_FILENAME "contacts.txt"
 
 SoftwareSerial sim800(TX, RX);
 AltSoftSerial neogps;
@@ -105,7 +104,6 @@ void setup() {
   lcd.setCursor(12,1);
   lcd.print("done");
   delay(1000);
-  initContact();
 }
 
 void loop() {
@@ -419,31 +417,4 @@ void logGpsData(String data, String filename) {
   gpsFile.println(data);
   gpsFile.close();
   Serial.println("Done.");
-}
-
-void initContact() {
-  File file;
-  if (!SD.exists(CONTACTS_FILENAME)) {
-    file = SD.open(CONTACTS_FILENAME, FILE_WRITE);
-    file.print("EMERGENCY_CONTACT="+EMERGENCY_CONTACT+"\nMDRRMO=" + MDRRMO);
-  }
-
-  //File file = createOrOpenFile(CONTACTS_FILENAME);
-  file = SD.open(CONTACTS_FILENAME, FILE_WRITE);
-  if (file) {
-    Serial.print("Reading to test.txt...");
-    
-    while (file.available()) {
-      Serial.write(file.read());
-    }
-    
-    file.close();
-    Serial.println("done.");
-   
-    // close the file:
-    file.close();
-  } else {
-    Serial.println("error opening test.txt");
-  }
-  
 }
