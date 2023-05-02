@@ -41,7 +41,7 @@ String MDRRMO = "+639XXXXXXXXX"; // change this to reflect the actual MDRRMO
 
 String URL = "https://animated-gumdrop-c7294b.netlify.app/?location=";
 
-long latitude = 0, longitude = 0, speed = 0;
+double latitude = 0.0, longitude = 0.0, speed = 0.0;
 
 int xaxis = 0, yaxis = 0, zaxis = 0;
 int magnitude = 0;
@@ -177,6 +177,7 @@ void loop() {
 
   if (millis() - gpsMillis > 5000 ) {
     Serial.println("Display GPS data in LCD I2C");
+    lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print("Lat: " + String(latitude, 6));
     lcd.setCursor(0, 1);
@@ -361,39 +362,55 @@ void initGps() {
 }
 
 void getLocation() {
-  long gpsMillis = 0L;
   while (neogps.available() > 0) {
-    if (millis() - gpsMillis > 5000) {
-      if (gps.encode(neogps.read())) {
-      
-        if (gps.location.isUpdated()) {
-          latitude = gps.location.lat();
-          longitude = gps.location.lng();
-          speed = gps.speed.kmph();
-
-          String data = "Location: ";
-          data += String(latitude, 6);
-          data += ",";
-          data += String(longitude, 6);
-          data += " Speed: ";
-          data += speed;
-
-          data += " Date/Time: ";
-          data += gps.date.month() + "/";
-          data += gps.date.day() + "/";
-          data += gps.date.year() + " ";
-          data += gps.time.hour() + ":";
-          data += gps.time.minute() + ":";
-          data += gps.time.second();
-
-          Serial.println(data);
-
-          logGpsData(data, GPS_DATA_FILENAME);
-        }
-      }
-      gpsMillis = millis();
+    if (gps.encode(neogps.read())) {
+      getInfo();
     }
   }
+}
+
+void getInfo() {
+  if (gps.location.isValid()) {
+    latitude = gps.location.lat();
+    longitude = gps.location.lng();
+    speed = gps.speed.kmph();
+
+    String locationData = "Location: ";
+    locationData += String(latitude, 6);
+    locationData += ",";
+    locationData += String(longitude, 6);
+    locationData += " Speed: ";
+    locationData += speed;
+
+    String dateData = " Date/Time: ";
+    if (gps.date.isValid()) {
+      dateData += gps.date.month();
+      dateData += "/";
+      dateData += gps.date.day();
+      dateData += "/";
+      dateData += gps.date.year();
+    }else {
+      dateData += "--/--/--";
+    }
+
+    String timeData = " ";
+    if (gps.time.isUpdated()) {
+      timeData += gps.time.hour();
+      timeData += ":";
+      timeData += gps.time.minute();
+      timeData += ":";
+      timeData += gps.time.second();
+    } else {
+      timeData += "--:--:--";
+    }
+    Serial.println(locationData + dateData + timeData);
+  }
+  else {
+    Serial.println("No GPS location data.");
+  }
+  Serial.println();
+  Serial.println();
+  delay(1000);
 }
 
 void logGpsData(String data, String filename) {
