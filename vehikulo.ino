@@ -386,6 +386,8 @@ void getLocation() {
           data += gps.time.minute() + ":";
           data += gps.time.second();
 
+          Serial.println(data);
+
           logGpsData(data, GPS_DATA_FILENAME);
         }
       }
