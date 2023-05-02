@@ -39,7 +39,7 @@ boolean isAlerted = false;
 String EMERGENCY_CONTACT = "+639XXXXXXXXX"; // change this to reflect the actual Emergency Number
 String MDRRMO = "+639XXXXXXXXX"; // change this to reflect the actual MDRRMO
 
-String URL = "https://animated-gumdrop-c7294b.netlify.app/?location=";
+String URL = "https://vehikulo.netlify.app/?location=";
 
 double latitude = 0.0, longitude = 0.0, speed = 0.0;
 
