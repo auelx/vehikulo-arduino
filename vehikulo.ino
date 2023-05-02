@@ -172,22 +172,22 @@ void loop() {
       isAlerted = true;
     }
 
-    if (millis() - gpsMillis > 5000 ) {
-      Serial.println("Display GPS data in LCD I2C");
-      lcd.setCursor(0, 0);
-      lcd.print("Lat: " + String(latitude, 6));
-      lcd.setCursor(0, 1);
-      lcd.print("Lon: " + String(longitude, 6));
-      delay(1000);
-      lcd.setCursor(0, 0);
-      lcd.print("Speed: " + String(latitude));
-      lcd.setCursor(0, 1);
-      lcd.print("----------------");
-      delay(1000);
-      gpsMillis = millis();
-    }
-
     checkForIncomingMessages();
+  }
+
+  if (millis() - gpsMillis > 5000 ) {
+    Serial.println("Display GPS data in LCD I2C");
+    lcd.setCursor(0, 0);
+    lcd.print("Lat: " + String(latitude, 6));
+    lcd.setCursor(0, 1);
+    lcd.print("Lon: " + String(longitude, 6));
+    delay(1000);
+    lcd.setCursor(0, 0);
+    lcd.print("Speed: " + String(latitude));
+    lcd.setCursor(0, 1);
+    lcd.print("----------------");
+    delay(1000);
+    gpsMillis = millis();
   }
 
   updateSerial();
