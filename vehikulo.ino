@@ -36,8 +36,8 @@ boolean askHelp = false;
 boolean flag = false;
 boolean isAlerted = false;
 
-String EMERGENCY_CONTACT = "+639XXXXXXXXX";
-String MDRRMO = "+639XXXXXXXXX";
+String EMERGENCY_CONTACT = "+639XXXXXXXXX"; // change this to reflect the actual Emergency Number
+String MDRRMO = "+639XXXXXXXXX"; // change this to reflect the actual MDRRMO
 
 String URL = "https://animated-gumdrop-c7294b.netlify.app/?location=";
 
