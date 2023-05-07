@@ -22,8 +22,6 @@
 #define TX 11
 #define RX 10
 
-#define SENSITIVITY 100
-
 #define GPS_DATA_FILENAME "gps-data.txt"
 
 SoftwareSerial sim800(TX, RX);
@@ -32,7 +30,6 @@ TinyGPSPlus gps;
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 boolean askHelp = false;
-boolean flag = false;
 boolean isAlerted = false;
 
 String EMERGENCY_CONTACT = "+639XXXXXXXXX"; // change this to reflect the actual Emergency Number
@@ -44,6 +41,8 @@ double latitude = 0.0, longitude = 0.0, speed = 0.0;
 
 int xaxis = 0, yaxis = 0, zaxis = 0;
 int magnitude = 0;
+const int THRESHOLD = 15;
+const int DELAY_MS = 100;
 
 long gpsMillis = 0L;
 
@@ -133,7 +132,7 @@ void loop() {
 
   if(isCollisionDetected()) {
     askHelp = true;
-    Serial.println("Collision Detected!");
+    Serial.println("Accident detected.");
     lcd.clear();
     lcd.setCursor(0,0); //col=0 row=0
     lcd.print(" CRASH DETECTED ");
@@ -317,34 +316,22 @@ int vibration = 2;
 int devibrate = 75;
 
 boolean isCollisionDetected() {
-  
-  int oldx = xaxis;
-  int oldy = yaxis;
-  int oldz = zaxis;
 
   xaxis = analogRead(X);
   yaxis = analogRead(Y);
   zaxis = analogRead(Z);
-  vibration--;
-  if(vibration < 0) vibration = 0;
-  
-  if(vibration > 0) return false;
-  int deltx = xaxis - oldx;
-  int delty = yaxis - oldy;
-  int deltz = zaxis - oldz;
-  
-  magnitude = sqrt(sq(deltx) + sq(delty) + sq(deltz));
-  Serial.println(magnitude);
-  boolean result = false;
 
-  if (magnitude >= SENSITIVITY) {
-    result = true;
-    vibration = devibrate;
-  } else {
-    result = false;
-    magnitude=0;
-  }
-  return result;
+  // Get acceleration value uisng 3 accelerometer value
+  int accel_value = sqrt(sq(xaxis)+sq(yaxis)+sq(zaxis));
+
+  // Convert the acceleration sensor value to mph
+  float mph_value = (accel_value * 0.0049 * 2.23694);
+
+  // Calculate the deceleration in mph/s
+  float deceleration = mph_value / (DELAY_MS / 1000);
+
+  // Check if the deceleration exceeds the threshold
+  return deceleration >= THRESHOLD;
 }
 
 void initGps() {
