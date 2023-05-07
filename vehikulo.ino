@@ -22,10 +22,7 @@
 #define TX 11
 #define RX 10
 
-#define SENSITIVITY 100
-
 #define GPS_DATA_FILENAME "gps-data.txt"
-#define CONTACTS_FILENAME "contacts.txt"
 
 SoftwareSerial sim800(TX, RX);
 AltSoftSerial neogps;
@@ -33,18 +30,19 @@ TinyGPSPlus gps;
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 boolean askHelp = false;
-boolean flag = false;
 boolean isAlerted = false;
 
 String EMERGENCY_CONTACT = "+639XXXXXXXXX"; // change this to reflect the actual Emergency Number
 String MDRRMO = "+639XXXXXXXXX"; // change this to reflect the actual MDRRMO
 
-String URL = "https://animated-gumdrop-c7294b.netlify.app/?location=";
+String URL = "https://vehikulo.netlify.app/?location=";
 
 double latitude = 0.0, longitude = 0.0, speed = 0.0;
 
 int xaxis = 0, yaxis = 0, zaxis = 0;
 int magnitude = 0;
+const int THRESHOLD = 15;
+const int DELAY_MS = 100;
 
 long gpsMillis = 0L;
 
@@ -105,7 +103,6 @@ void setup() {
   lcd.setCursor(12,1);
   lcd.print("done");
   delay(1000);
-  initContact();
 }
 
 void loop() {
@@ -135,7 +132,7 @@ void loop() {
 
   if(isCollisionDetected()) {
     askHelp = true;
-    Serial.println("Collision Detected!");
+    Serial.println("Accident detected.");
     lcd.clear();
     lcd.setCursor(0,0); //col=0 row=0
     lcd.print(" CRASH DETECTED ");
@@ -319,44 +316,29 @@ int vibration = 2;
 int devibrate = 75;
 
 boolean isCollisionDetected() {
-  
-  int oldx = xaxis;
-  int oldy = yaxis;
-  int oldz = zaxis;
 
   xaxis = analogRead(X);
   yaxis = analogRead(Y);
   zaxis = analogRead(Z);
-  vibration--;
-  if(vibration < 0) vibration = 0;
-  
-  if(vibration > 0) return false;
-  int deltx = xaxis - oldx;
-  int delty = yaxis - oldy;
-  int deltz = zaxis - oldz;
-  
-  magnitude = sqrt(sq(deltx) + sq(delty) + sq(deltz));
-  Serial.println(magnitude);
-  boolean result = false;
 
-  if (magnitude >= SENSITIVITY) {
-    result = true;
-    vibration = devibrate;
-  } else {
-    result = false;
-    magnitude=0;
-  }
-  return result;
+  // Get acceleration value uisng 3 accelerometer value
+  int accel_value = sqrt(sq(xaxis)+sq(yaxis)+sq(zaxis));
+
+  // Convert the acceleration sensor value to mph
+  float mph_value = (accel_value * 0.0049 * 2.23694);
+
+  // Calculate the deceleration in mph/s
+  float deceleration = mph_value / (DELAY_MS / 1000);
+
+  // Check if the deceleration exceeds the threshold
+  return deceleration >= THRESHOLD;
 }
 
 void initGps() {
-  long gpsMillis = 0L;
-  while (neogps.available() > 0) {
-    if (millis() - gpsMillis > 5000) {
-      if (!gps.encode(neogps.read())) {
-        Serial.println("No GPS data is available");
-      }
-      gpsMillis = millis();
+  while(!latitude == 0) {
+    while(neogps.available()) {
+      Serial.write(neogps.read());
+      delay(1000);
     }
   }
 }
@@ -371,6 +353,11 @@ void getLocation() {
 
 void getInfo() {
   if (gps.location.isValid()) {
+
+    // skip latitude and longitude values if match from previous values
+    if (gps.location.lat() == latitude && gps.location.lng() == longitude) 
+      return;
+
     latitude = gps.location.lat();
     longitude = gps.location.lng();
     speed = gps.speed.kmph();
@@ -389,61 +376,32 @@ void getInfo() {
       dateData += gps.date.day();
       dateData += "/";
       dateData += gps.date.year();
-    }else {
-      dateData += "--/--/--";
     }
 
     String timeData = " ";
-    if (gps.time.isUpdated()) {
+    if (gps.time.isValid()) {
       timeData += gps.time.hour();
       timeData += ":";
       timeData += gps.time.minute();
       timeData += ":";
       timeData += gps.time.second();
-    } else {
-      timeData += "--:--:--";
     }
-    Serial.println(locationData + dateData + timeData);
-  }
-  else {
+
+    String data = locationData + dateData + timeData;
+    Serial.println(data);
+
+    logGpsData(data);
+    
+  } else {
     Serial.println("No GPS location data.");
   }
-  Serial.println();
-  Serial.println();
   delay(1000);
 }
 
-void logGpsData(String data, String filename) {
-  File gpsFile = createOrOpenFile(filename);
+void logGpsData(String data) {
+  File gpsFile = createOrOpenFile(GPS_DATA_FILENAME);
   Serial.println("Logging location data to gps_data.txt...");
   gpsFile.println(data);
   gpsFile.close();
   Serial.println("Done.");
-}
-
-void initContact() {
-  File file;
-  if (!SD.exists(CONTACTS_FILENAME)) {
-    file = SD.open(CONTACTS_FILENAME, FILE_WRITE);
-    file.print("EMERGENCY_CONTACT="+EMERGENCY_CONTACT+"\nMDRRMO=" + MDRRMO);
-  }
-
-  //File file = createOrOpenFile(CONTACTS_FILENAME);
-  file = SD.open(CONTACTS_FILENAME, FILE_WRITE);
-  if (file) {
-    Serial.print("Reading to test.txt...");
-    
-    while (file.available()) {
-      Serial.write(file.read());
-    }
-    
-    file.close();
-    Serial.println("done.");
-   
-    // close the file:
-    file.close();
-  } else {
-    Serial.println("error opening test.txt");
-  }
-  
 }
