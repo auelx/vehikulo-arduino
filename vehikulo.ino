@@ -335,13 +335,10 @@ boolean isCollisionDetected() {
 }
 
 void initGps() {
-  long gpsMillis = 0L;
-  while (neogps.available() > 0) {
-    if (millis() - gpsMillis > 5000) {
-      if (!gps.encode(neogps.read())) {
-        Serial.println("No GPS data is available");
-      }
-      gpsMillis = millis();
+  while(!latitude == 0) {
+    while(neogps.available()) {
+      Serial.write(neogps.read());
+      delay(1000);
     }
   }
 }
@@ -356,6 +353,11 @@ void getLocation() {
 
 void getInfo() {
   if (gps.location.isValid()) {
+
+    // skip latitude and longitude values if match from previous values
+    if (gps.location.lat() == latitude && gps.location.lng() == longitude) 
+      return;
+
     latitude = gps.location.lat();
     longitude = gps.location.lng();
     speed = gps.speed.kmph();
@@ -374,32 +376,30 @@ void getInfo() {
       dateData += gps.date.day();
       dateData += "/";
       dateData += gps.date.year();
-    }else {
-      dateData += "--/--/--";
     }
 
     String timeData = " ";
-    if (gps.time.isUpdated()) {
+    if (gps.time.isValid()) {
       timeData += gps.time.hour();
       timeData += ":";
       timeData += gps.time.minute();
       timeData += ":";
       timeData += gps.time.second();
-    } else {
-      timeData += "--:--:--";
     }
-    Serial.println(locationData + dateData + timeData);
-  }
-  else {
+
+    String data = locationData + dateData + timeData;
+    Serial.println(data);
+
+    logGpsData(data);
+    
+  } else {
     Serial.println("No GPS location data.");
   }
-  Serial.println();
-  Serial.println();
   delay(1000);
 }
 
-void logGpsData(String data, String filename) {
-  File gpsFile = createOrOpenFile(filename);
+void logGpsData(String data) {
+  File gpsFile = createOrOpenFile(GPS_DATA_FILENAME);
   Serial.println("Logging location data to gps_data.txt...");
   gpsFile.println(data);
   gpsFile.close();
