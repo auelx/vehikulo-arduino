@@ -333,7 +333,9 @@ void initGps() {
   while(latitude == 0) {
     while(neogps.available()) {
       if (gps.encode(neogps.read())) {
-        getInfo();
+        latitude = gps.location.lat();
+        longitude = gps.location.lng();
+        speed = gps.speed.kmph();
       }
     }
   }
