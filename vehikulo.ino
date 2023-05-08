@@ -130,14 +130,15 @@ void loop() {
     help();
   }
 
-  if(isCollisionDetected()) {
+  if(isAccidentDetected()) {
     askHelp = true;
     Serial.println("Accident detected.");
     lcd.clear();
     lcd.setCursor(0,0); //col=0 row=0
     lcd.print(" CRASH DETECTED ");
     lcd.setCursor(0,1); //col=0 row=1
-    lcd.print("MAGNITUDE:  " + String(magnitude));
+    //lcd.print("MAGNITUDE:  " + String(magnitude));
+    lcd.print("----------------");
   }
 
   while(askHelp) {
@@ -312,10 +313,7 @@ void decodeMessage(String text) {
   }
 }
 
-int vibration = 2;
-int devibrate = 75;
-
-boolean isCollisionDetected() {
+boolean isAccidentDetected() {
 
   xaxis = analogRead(X);
   yaxis = analogRead(Y);
@@ -335,10 +333,11 @@ boolean isCollisionDetected() {
 }
 
 void initGps() {
-  while(!latitude == 0) {
+  while(latitude == 0) {
     while(neogps.available()) {
-      Serial.write(neogps.read());
-      delay(1000);
+      if (gps.encode(neogps.read())) {
+        getInfo();
+      }
     }
   }
 }
@@ -391,11 +390,11 @@ void getInfo() {
     Serial.println(data);
 
     logGpsData(data);
-    
+    delay(1000);
+
   } else {
     Serial.println("No GPS location data.");
   }
-  delay(1000);
 }
 
 void logGpsData(String data) {
