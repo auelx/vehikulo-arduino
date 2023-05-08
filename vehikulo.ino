@@ -295,10 +295,7 @@ void initSd() {
 }
 
 File createOrOpenFile(String filename) {
-  if (!SD.exists(filename)) {
-    File gpsFile = SD.open(filename, FILE_WRITE);
-    gpsFile.close();
-  }
+  return SD.open(filename, FILE_WRITE); 
 }
 
 // function to obtain sender number from the message and check for "GET LOCATION"
