@@ -312,10 +312,7 @@ void decodeMessage(String text) {
   }
 }
 
-int vibration = 2;
-int devibrate = 75;
-
-boolean isCollisionDetected() {
+boolean isAccidentDetected() {
 
   xaxis = analogRead(X);
   yaxis = analogRead(Y);
@@ -328,7 +325,7 @@ boolean isCollisionDetected() {
   float mph_value = (accel_value * 0.0049 * 2.23694);
 
   // Calculate the deceleration in mph/s
-  float deceleration = mph_value / (DELAY_MS / 1000);
+  float deceleration = mph_value / (float(DELAY_MS) / float(1000));
 
   // Check if the deceleration exceeds the threshold
   return deceleration >= THRESHOLD;
