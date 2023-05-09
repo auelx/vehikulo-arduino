@@ -34,6 +34,7 @@ boolean isAlerted = false;
 
 String EMERGENCY_CONTACT = "+639XXXXXXXXX"; // change this to reflect the actual Emergency Number
 String MDRRMO = "+639XXXXXXXXX"; // change this to reflect the actual MDRRMO
+String THIRD_NUMBER = "+639XXXXXXXXX"; // change this to reflect the actual MDRRMO
 
 String URL = "https://vehikulo.netlify.app/?location=";
 
@@ -228,8 +229,7 @@ void askForHelp() {
   makeCall(EMERGENCY_CONTACT);
   //String message = "Need Help. Here's my location (" + String(latitude) + ", " + String(longitude) + ")";     // non URL message
   String message = "Need Help. Locate me on map here: " + URL + String(latitude) + ", " + String(longitude);    
-  sendSms(EMERGENCY_CONTACT, message);
-  sendSms(MDRRMO, message);
+  sendSms(EMERGENCY_CONTACT, MDRRMO, THIRD_NUMBER, message);
 }
 
 // function to simply LED light management
@@ -237,6 +237,44 @@ void lightItUp(int red, int green, int blue) {
   digitalWrite(RED_LED, red);
   digitalWrite(GREEN_LED, green);
   digitalWrite(BLUE_LED, blue);
+}
+
+void sendSms(String number1, String number2, String number3, String message) {
+  lightItUp(LOW, LOW, HIGH);
+  lcd.setCursor(0, 0);
+  lcd.print("SENDING LOCATION");
+  lcd.setCursor(0, 1);
+  lcd.print("----------------");
+  sim800.print("AT+CMGF=1\r");
+  updateSerial();
+  delay(100);
+  Serial.println("Saving SMS...");
+  sim800.print("AT+CMGW=\""+ number1 + "\"\r");
+  updateSerial();
+  delay(500);
+  sim800.print(message);
+  sim800.print((char)26);
+  updateSerial();
+  delay(500);
+  Serial.println("Sending SMS to number1...");
+  sim800.print("AT+CMSS=3,\"" + number1 +"\"");
+  updateSerial();
+  delay(500);
+  Serial.println("Sending SMS to number2...");
+  sim800.print("AT+CMSS=3,\"" + number2 +"\"");
+  updateSerial();
+  delay(500);
+  Serial.println("Sending SMS to number3...");
+  sim800.print("AT+CMSS=3,\"" + number3 +"\"");
+  updateSerial();
+  delay(500);
+  sim800.println();
+  Serial.println("All Text Sent.");
+  delay(500);
+  sim800.print("AT+CMGD=3");
+  updateSerial();
+  delay(500);
+  lightItUp(LOW, LOW, LOW);
 }
 
 void sendSms(String number, String message) {
