@@ -141,6 +141,21 @@ void loop() {
     lcd.print("----------------");
   }
 
+  if (askHelp) {
+    long abortMillis = 10000L;
+    while (abortMillis >= 0) {
+      lcd.setCursor(0,0);
+      lcd.print("ASKING HELP IN..");
+      lcd.setCursor(0,1);
+      lcd.print("..." + String((abortMillis)/1000)  + "           ");
+      if (isPressed(ABORT_BUTTON))
+        abort();
+
+      abortMillis -= 1000;
+      delay(1000);
+    }
+  }
+
   while(askHelp) {
 
     lcd.setCursor(0,0); //col=0 row=0
