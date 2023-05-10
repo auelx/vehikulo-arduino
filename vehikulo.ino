@@ -200,7 +200,7 @@ void loop() {
     lcd.print("Lon: " + String(longitude, 6));
     delay(1000);
     lcd.setCursor(0, 0);
-    lcd.print("Speed: " + String(latitude));
+    lcd.print("Speed: " + String(speed));
     lcd.setCursor(0, 1);
     lcd.print("----------------");
     delay(1000);
@@ -337,7 +337,8 @@ boolean isAccidentDetected() {
 
   // Convert the acceleration sensor value to mph
   float mph_value = (accel_value * 0.0049 * 2.23694);
-
+  
+  speed = double(mph_value);
   // Calculate the deceleration in mph/s
   float deceleration = mph_value / (float(DELAY_MS) / float(1000));
 
@@ -351,7 +352,6 @@ void initGps() {
       if (gps.encode(neogps.read())) {
         latitude = gps.location.lat();
         longitude = gps.location.lng();
-        speed = gps.speed.kmph();
 
         currentDate += String(gps.date.month());
         currentDate += String(gps.date.day());
@@ -378,7 +378,6 @@ void getInfo() {
 
     latitude = gps.location.lat();
     longitude = gps.location.lng();
-    speed = gps.speed.kmph();
 
     String locationData = "Location: ";
     locationData += String(latitude, 6);
