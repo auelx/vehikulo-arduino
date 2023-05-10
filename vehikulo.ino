@@ -321,7 +321,7 @@ void decodeMessage(String text) {
   String sender = text.substring(text.indexOf("+63")).substring(0,13);
   if (sender == EMERGENCY_CONTACT || sender == MDRRMO) {
     if (text.indexOf("GET LOCATION") >= 0) {
-      sendSms(sender, "Need Help. Here's my location (" + String(latitude, 6) + "," + String(longitude, 6) + ")");
+      sendSms(sender, "Need Help. Locate me on map here: " + URL + String(latitude, 6) + "," + String(longitude, 6));
     }
   }
 }
