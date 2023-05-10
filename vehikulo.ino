@@ -300,13 +300,14 @@ void checkForIncomingMessages() {
 }
 
 void initSd() {
-  Serial.print("Initializing SD card...");
-
-  if (!SD.begin()) {
+  while(!SD.begin()) {
+    Serial.print("Initializing SD card...");
+    delay(1000);
     Serial.println("failed!");
-    while (1);
   }
-
+  
+  Serial.print("Initializing SD card...");
+  delay(1000);
   Serial.println("success.");
 }
 
