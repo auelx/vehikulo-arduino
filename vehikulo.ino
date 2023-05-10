@@ -22,7 +22,7 @@
 #define TX 11
 #define RX 10
 
-#define GPS_DATA_FILENAME "gps-data.txt"
+#define GPS_DATA_DIR "gps-data"
 
 SoftwareSerial sim800(TX, RX);
 AltSoftSerial neogps;
@@ -34,8 +34,11 @@ boolean isAlerted = false;
 
 String EMERGENCY_CONTACT = "+639XXXXXXXXX"; // change this to reflect the actual Emergency Number
 String MDRRMO = "+639XXXXXXXXX"; // change this to reflect the actual MDRRMO
+String THIRD_NUMBER = "+639XXXXXXXXX"; // change this to reflect the actual MDRRMO
 
 String URL = "https://vehikulo.netlify.app/?location=";
+
+String currentDate = "";
 
 double latitude = 0.0, longitude = 0.0, speed = 0.0;
 
@@ -197,14 +200,14 @@ void loop() {
     lcd.print("Lon: " + String(longitude, 6));
     delay(1000);
     lcd.setCursor(0, 0);
-    lcd.print("Speed: " + String(latitude));
+    lcd.print("Speed: " + String(speed));
     lcd.setCursor(0, 1);
     lcd.print("----------------");
     delay(1000);
     gpsMillis = millis();
   }
 
-  updateSerial();
+  checkForIncomingMessages();
 }
 
 boolean isPressed(uint8_t pin) {
@@ -226,10 +229,11 @@ void abort() {
 
 void askForHelp() {
   makeCall(EMERGENCY_CONTACT);
-  //String message = "Need Help. Here's my location (" + String(latitude) + ", " + String(longitude) + ")";     // non URL message
-  String message = "Need Help. Locate me on map here: " + URL + String(latitude) + ", " + String(longitude);    
+  //String message = "Need Help. Here's my location (" + String(latitude, 6) + "," + String(longitude, 6) + ")";     // non URL message
+  String message = "Need Help. Locate me on map here: " + URL + String(latitude, 6) + "," + String(longitude, 6);    
   sendSms(EMERGENCY_CONTACT, message);
   sendSms(MDRRMO, message);
+  sendSms(THIRD_NUMBER, message);
 }
 
 // function to simply LED light management
@@ -251,15 +255,11 @@ void sendSms(String number, String message) {
   delay(100);
   sim800.print("AT+CMGS=\""+ number + "\"\r");
   updateSerial();
-  delay(500);
   sim800.print(message);
-  delay(500);
   sim800.print((char)26);
   updateSerial();
-  delay(500);
-  sim800.println();
+  delay(5000);
   Serial.println("Text Sent.");
-  delay(500);
   lightItUp(LOW, LOW, LOW);
 }
 
@@ -300,13 +300,14 @@ void checkForIncomingMessages() {
 }
 
 void initSd() {
-  Serial.print("Initializing SD card...");
-
-  if (!SD.begin()) {
+  while(!SD.begin()) {
+    Serial.print("Initializing SD card...");
+    delay(1000);
     Serial.println("failed!");
-    while (1);
   }
-
+  
+  Serial.print("Initializing SD card...");
+  delay(1000);
   Serial.println("success.");
 }
 
@@ -320,7 +321,7 @@ void decodeMessage(String text) {
   String sender = text.substring(text.indexOf("+63")).substring(0,13);
   if (sender == EMERGENCY_CONTACT || sender == MDRRMO) {
     if (text.indexOf("GET LOCATION") >= 0) {
-      sendSms(sender, "Need Help. Here's my location (" + String(latitude) + ", " + String(longitude) + ")");
+      sendSms(sender, "Need Help. Here's my location (" + String(latitude, 6) + "," + String(longitude, 6) + ")");
     }
   }
 }
@@ -336,7 +337,8 @@ boolean isAccidentDetected() {
 
   // Convert the acceleration sensor value to mph
   float mph_value = (accel_value * 0.0049 * 2.23694);
-
+  
+  speed = double(mph_value);
   // Calculate the deceleration in mph/s
   float deceleration = mph_value / (float(DELAY_MS) / float(1000));
 
@@ -350,7 +352,10 @@ void initGps() {
       if (gps.encode(neogps.read())) {
         latitude = gps.location.lat();
         longitude = gps.location.lng();
-        speed = gps.speed.kmph();
+
+        currentDate += String(gps.date.month());
+        currentDate += String(gps.date.day());
+        currentDate += String(gps.date.year());
       }
     }
   }
@@ -373,7 +378,6 @@ void getInfo() {
 
     latitude = gps.location.lat();
     longitude = gps.location.lng();
-    speed = gps.speed.kmph();
 
     String locationData = "Location: ";
     locationData += String(latitude, 6);
@@ -412,9 +416,18 @@ void getInfo() {
 }
 
 void logGpsData(String data) {
-  File gpsFile = createOrOpenFile(GPS_DATA_FILENAME);
-  Serial.println("Logging location data to gps_data.txt...");
-  gpsFile.println(data);
-  gpsFile.close();
-  Serial.println("Done.");
+  if (!SD.exists(GPS_DATA_DIR))
+    SD.mkdir(GPS_DATA_DIR);
+
+  String filename = String(GPS_DATA_DIR) + "/" + currentDate + ".txt";
+  File gpsFile = createOrOpenFile(filename);
+
+  if (gpsFile) {
+    Serial.println("Logging location data...");
+    gpsFile.println(data);
+    gpsFile.close();
+    Serial.println("Done.");
+  } else {
+    Serial.println("Error logging location data...");
+  }
 }
