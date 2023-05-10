@@ -207,7 +207,7 @@ void loop() {
     gpsMillis = millis();
   }
 
-  updateSerial();
+  checkForIncomingMessages();
 }
 
 boolean isPressed(uint8_t pin) {
