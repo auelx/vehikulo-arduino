@@ -22,7 +22,7 @@
 #define TX 11
 #define RX 10
 
-#define GPS_DATA_FILENAME "gps-data.txt"
+#define GPS_DATA_DIR "gps-data"
 
 SoftwareSerial sim800(TX, RX);
 AltSoftSerial neogps;
@@ -37,6 +37,8 @@ String MDRRMO = "+639XXXXXXXXX"; // change this to reflect the actual MDRRMO
 String THIRD_NUMBER = "+639XXXXXXXXX"; // change this to reflect the actual MDRRMO
 
 String URL = "https://vehikulo.netlify.app/?location=";
+
+String currentDate = "";
 
 double latitude = 0.0, longitude = 0.0, speed = 0.0;
 
@@ -349,6 +351,10 @@ void initGps() {
         latitude = gps.location.lat();
         longitude = gps.location.lng();
         speed = gps.speed.kmph();
+
+        currentDate += String(gps.date.month());
+        currentDate += String(gps.date.day());
+        currentDate += String(gps.date.year());
       }
     }
   }
@@ -410,9 +416,18 @@ void getInfo() {
 }
 
 void logGpsData(String data) {
-  File gpsFile = createOrOpenFile(GPS_DATA_FILENAME);
-  Serial.println("Logging location data to gps_data.txt...");
-  gpsFile.println(data);
-  gpsFile.close();
-  Serial.println("Done.");
+  if (!SD.exists(GPS_DATA_DIR))
+    SD.mkdir(GPS_DATA_DIR);
+
+  String filename = String(GPS_DATA_DIR) + "/" + currentDate + ".txt";
+  File gpsFile = createOrOpenFile(filename);
+
+  if (gpsFile) {
+    Serial.println("Logging location data...");
+    gpsFile.println(data);
+    gpsFile.close();
+    Serial.println("Done.");
+  } else {
+    Serial.println("Error logging location data...");
+  }
 }
