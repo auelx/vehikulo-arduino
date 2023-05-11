@@ -44,7 +44,7 @@ double latitude = 0.0, longitude = 0.0, speed = 0.0;
 
 int xaxis = 0, yaxis = 0, zaxis = 0;
 int magnitude = 0;
-const int THRESHOLD = 15;
+const int THRESHOLD = 25;
 const int DELAY_MS = 100;
 
 long gpsMillis = 0L;
