@@ -338,7 +338,6 @@ boolean isAccidentDetected() {
   // Convert the acceleration sensor value to mph
   float mph_value = (accel_value * 0.0049 * 2.23694);
   
-  speed = double(mph_value);
   // Calculate the deceleration in mph/s
   float deceleration = mph_value / (float(DELAY_MS) / float(1000));
 
@@ -378,6 +377,7 @@ void getInfo() {
 
     latitude = gps.location.lat();
     longitude = gps.location.lng();
+    speed = gps.speed.kmph();
 
     String locationData = "Location: ";
     locationData += String(latitude, 6);
