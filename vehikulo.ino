@@ -40,6 +40,8 @@ String URL = "https://vehikulo.netlify.app/?location=";
 
 String currentDate = "";
 
+File gpsFile;
+
 double latitude = 0.0, longitude = 0.0, speed = 0.0;
 
 int xaxis = 0, yaxis = 0, zaxis = 0;
@@ -300,6 +302,9 @@ void checkForIncomingMessages() {
 }
 
 void initSd() {
+  
+  String filename = String(GPS_DATA_DIR) + "/" + currentDate + ".txt";
+
   while(!SD.begin()) {
     Serial.print("Initializing SD card...");
     delay(1000);
@@ -307,6 +312,17 @@ void initSd() {
   }
   
   Serial.print("Initializing SD card...");
+  delay(1000);
+  Serial.println("success.");
+
+  Serial.print("Creating gps-data directory...");
+  if (!SD.exists(GPS_DATA_DIR))
+    SD.mkdir(GPS_DATA_DIR);
+  delay(1000);
+  Serial.println("success.");
+
+  Serial.print("Creating/Opening " + filename + "...");
+  gpsFile = createOrOpenFile(filename);
   delay(1000);
   Serial.println("success.");
 }
@@ -416,12 +432,6 @@ void getInfo() {
 }
 
 void logGpsData(String data) {
-  if (!SD.exists(GPS_DATA_DIR))
-    SD.mkdir(GPS_DATA_DIR);
-
-  String filename = String(GPS_DATA_DIR) + "/" + currentDate + ".txt";
-  File gpsFile = createOrOpenFile(filename);
-
   if (gpsFile) {
     Serial.println("Logging location data...");
     gpsFile.println(data);
@@ -429,5 +439,6 @@ void logGpsData(String data) {
     Serial.println("Done.");
   } else {
     Serial.println("Error logging location data...");
+    initSd();
   }
 }
