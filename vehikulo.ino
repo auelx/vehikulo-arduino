@@ -435,7 +435,6 @@ void logGpsData(String data) {
   if (gpsFile) {
     Serial.println("Logging location data...");
     gpsFile.println(data);
-    gpsFile.close();
     Serial.println("Done.");
   } else {
     Serial.println("Error logging location data...");
