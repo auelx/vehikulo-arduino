@@ -430,14 +430,27 @@ void getInfo() {
     Serial.println("No GPS location data.");
   }
 }
-
+int writeCounter = 0;
 void logGpsData(String data) {
+
+  if (writeCounter == 0) {
+    String filename = String(GPS_DATA_DIR) + "/" + currentDate + ".txt";
+    gpsFile = createOrOpenFile(filename);
+  }
+
   if (gpsFile) {
     Serial.println("Logging location data...");
     gpsFile.println(data);
     Serial.println("Done.");
+    writeCounter += 1;
+
   } else {
     Serial.println("Error logging location data...");
     initSd();
   }
+
+  if (writeCounter >= 10) {
+      gpsFile.close();
+      writeCounter = 0;
+    }
 }
