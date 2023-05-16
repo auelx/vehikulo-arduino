@@ -320,11 +320,6 @@ void initSd() {
     SD.mkdir(GPS_DATA_DIR);
   delay(1000);
   Serial.println("success.");
-
-  Serial.print("Creating/Opening " + filename + "...");
-  gpsFile = createOrOpenFile(filename);
-  delay(1000);
-  Serial.println("success.");
 }
 
 File createOrOpenFile(String filename) {
