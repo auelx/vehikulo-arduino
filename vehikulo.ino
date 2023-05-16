@@ -40,11 +40,13 @@ String URL = "https://vehikulo.netlify.app/?location=";
 
 String currentDate = "";
 
+File gpsFile;
+
 double latitude = 0.0, longitude = 0.0, speed = 0.0;
 
 int xaxis = 0, yaxis = 0, zaxis = 0;
 int magnitude = 0;
-const int THRESHOLD = 15;
+const int THRESHOLD = 25;
 const int DELAY_MS = 100;
 
 long gpsMillis = 0L;
@@ -300,6 +302,9 @@ void checkForIncomingMessages() {
 }
 
 void initSd() {
+  
+  String filename = String(GPS_DATA_DIR) + "/" + currentDate + ".txt";
+
   while(!SD.begin()) {
     Serial.print("Initializing SD card...");
     delay(1000);
@@ -307,6 +312,12 @@ void initSd() {
   }
   
   Serial.print("Initializing SD card...");
+  delay(1000);
+  Serial.println("success.");
+
+  Serial.print("Creating gps-data directory...");
+  if (!SD.exists(GPS_DATA_DIR))
+    SD.mkdir(GPS_DATA_DIR);
   delay(1000);
   Serial.println("success.");
 }
@@ -338,7 +349,6 @@ boolean isAccidentDetected() {
   // Convert the acceleration sensor value to mph
   float mph_value = (accel_value * 0.0049 * 2.23694);
   
-  speed = double(mph_value);
   // Calculate the deceleration in mph/s
   float deceleration = mph_value / (float(DELAY_MS) / float(1000));
 
@@ -378,6 +388,7 @@ void getInfo() {
 
     latitude = gps.location.lat();
     longitude = gps.location.lng();
+    speed = gps.speed.kmph();
 
     String locationData = "Location: ";
     locationData += String(latitude, 6);
@@ -414,20 +425,27 @@ void getInfo() {
     Serial.println("No GPS location data.");
   }
 }
-
+int writeCounter = 0;
 void logGpsData(String data) {
-  if (!SD.exists(GPS_DATA_DIR))
-    SD.mkdir(GPS_DATA_DIR);
 
-  String filename = String(GPS_DATA_DIR) + "/" + currentDate + ".txt";
-  File gpsFile = createOrOpenFile(filename);
+  if (writeCounter == 0) {
+    String filename = String(GPS_DATA_DIR) + "/" + currentDate + ".txt";
+    gpsFile = createOrOpenFile(filename);
+  }
 
   if (gpsFile) {
     Serial.println("Logging location data...");
     gpsFile.println(data);
-    gpsFile.close();
     Serial.println("Done.");
+    writeCounter += 1;
+
   } else {
     Serial.println("Error logging location data...");
+    initSd();
   }
+
+  if (writeCounter >= 10) {
+      gpsFile.close();
+      writeCounter = 0;
+    }
 }
