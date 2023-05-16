@@ -6,6 +6,7 @@
 #include <Wire.h>
 #include <SD.h>
 #include <SPI.h>
+#include <TimeLib.h>
 
 #define HELP_BUTTON 7
 #define ABORT_BUTTON 5
@@ -21,6 +22,8 @@
 
 #define TX 11
 #define RX 10
+
+#define TIME_OFFSET   28800 // define a clock offset of 28800 seconds (8 hour) ==> UTC + 8
 
 #define GPS_DATA_DIR "gps-data"
 
@@ -366,6 +369,8 @@ void initGps() {
         currentDate += String(gps.date.month());
         currentDate += String(gps.date.day());
         currentDate += String(gps.date.year());
+
+        updateDate();
       }
     }
   }
@@ -398,21 +403,20 @@ void getInfo() {
     locationData += speed;
 
     String dateData = " Date/Time: ";
-    if (gps.date.isValid()) {
-      dateData += gps.date.month();
-      dateData += "/";
-      dateData += gps.date.day();
-      dateData += "/";
-      dateData += gps.date.year();
-    }
-
     String timeData = " ";
-    if (gps.time.isValid()) {
-      timeData += gps.time.hour();
+
+    if (updateDate()) {
+      dateData += month();
+      dateData += "/";
+      dateData += day();
+      dateData += "/";
+      dateData += year();
+
+      timeData += hour();
       timeData += ":";
-      timeData += gps.time.minute();
+      timeData += minute();
       timeData += ":";
-      timeData += gps.time.second();
+      timeData += second();
     }
 
     String data = locationData + dateData + timeData;
@@ -448,4 +452,30 @@ void logGpsData(String data) {
       gpsFile.close();
       writeCounter = 0;
     }
+}
+
+boolean updateDate() {
+  byte seconds, minutes, hours, day, month;
+  int year;
+
+  if (gps.time.isValid())
+    return false;
+  
+    minutes = gps.time.minute();
+    seconds = gps.time.second();
+    hours   = gps.time.hour();
+  
+  // get date drom GPS module
+  if (!gps.date.isValid())
+    return false;
+  
+    day   = gps.date.day();
+    month = gps.date.month();
+    year  = gps.date.year();
+  // set current UTC time
+  setTime(hours, minutes, seconds, day, month, year);
+  // add the offset to get local time
+  adjustTime(TIME_OFFSET);
+
+  return true;
 }
